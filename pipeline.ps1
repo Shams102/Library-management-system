@@ -101,7 +101,8 @@ Write-Pass "Docker image '$FullImage' built successfully."
 Write-Stage "4" "DEPLOY APPLICATION"
 
 # Bring up (or recreate) the services
-& docker compose -f $ComposeFile up -d --build --force-recreate
+# Note: We explicitly load both compose files. The override adds the "build:" directive.
+& docker compose -f $ComposeFile -f docker-compose.override.yml up -d --build --force-recreate
 if ($LASTEXITCODE -ne 0) {
     Write-Fail "Docker Compose deployment failed."
     exit 1

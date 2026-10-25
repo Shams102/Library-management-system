@@ -1,13 +1,17 @@
 # ---------------------------------------------------------------------------
 # Docker Compose – Library Management System
 # ---------------------------------------------------------------------------
+# IMAGE_TAG controls which Docker image is used:
+#   - Default "v1" → local builds (via docker-compose.override.yml)
+#   - Set to "latest" or a commit SHA → pulls from GHCR
+#
+# SECRET_KEY is read from the environment or a .env file.
+#   cp .env.example .env   # then edit .env with a real secret
+# ---------------------------------------------------------------------------
 
 services:
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: library-management:v1
+    image: ${IMAGE_NAME:-library-management}:${IMAGE_TAG:-v1}
     container_name: library-app
     ports:
       - "5000:5000"
@@ -15,7 +19,7 @@ services:
       - library-data:/data          # Persistent SQLite storage
     environment:
       - DATABASE_PATH=/data/library.db
-      - SECRET_KEY=production-secret-change-me
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]

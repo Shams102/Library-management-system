@@ -1,0 +1,32 @@
+# =============================================================================
+# .gitignore – Library Management System
+# =============================================================================
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# --- Testing ---
+.pytest_cache/
+htmlcov/
+.coverage
+
+# --- IDE ---
+.vscode/
+.idea/
+
+# --- Environment & Secrets ---
+.env
+*.db
+
+# --- OS ---
+Thumbs.db
+Desktop.ini
+.DS_Store
