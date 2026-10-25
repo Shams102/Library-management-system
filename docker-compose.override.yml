@@ -1,0 +1,16 @@
+# ---------------------------------------------------------------------------
+# Docker Compose Override – LOCAL DEVELOPMENT ONLY
+# ---------------------------------------------------------------------------
+# This file is automatically loaded by Docker Compose when you run
+# "docker compose up" in the project directory. It adds the "build"
+# directive so that Compose builds the image from your local Dockerfile.
+#
+# When deploying from GHCR (using deploy.ps1), this file is NOT used
+# because deploy.ps1 explicitly specifies only docker-compose.yml.
+# ---------------------------------------------------------------------------
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile

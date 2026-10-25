@@ -11,7 +11,13 @@ tests/
 .dockerignore
 *.md
 pipeline.ps1
+deploy.ps1
 instance/
 *.db
 .venv
 venv
+.env
+.env.example
+.github
+docker-compose.override.yml
+

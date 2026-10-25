@@ -1,0 +1,137 @@
+# =============================================================================
+# GitHub Actions CI/CD Pipeline – Library Management System
+# =============================================================================
+# This workflow automates:
+#   1. Testing   – Runs pytest on every push/PR
+#   2. Building  – Builds a Docker image (only after tests pass)
+#   3. Publishing – Pushes the image to GHCR (only on the main branch)
+#   4. Scanning  – Runs Trivy vulnerability scan on the published image
+# =============================================================================
+
+name: CI/CD Pipeline
+
+# ── When does this workflow run? ─────────────────────────────────────────────
+on:
+  push:
+    branches:
+      - main                       # Every push to main
+      - 'feature/**'               # Every push to feature branches
+  pull_request:
+    branches:
+      - main                       # Every PR targeting main
+
+# ── Default permissions (least privilege) ────────────────────────────────────
+permissions:
+  contents: read                   # Read repo code (needed by checkout)
+
+# =============================================================================
+# JOB 1 – TEST
+# =============================================================================
+jobs:
+  test:
+    name: "🧪 Run Tests"
+    runs-on: ubuntu-latest         # GitHub-hosted Ubuntu runner
+
+    steps:
+      # Step 1: Check out the repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python 3.12
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"             # Cache pip packages for faster runs
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # Step 4: Run the test suite
+      - name: Run pytest
+        run: python -m pytest tests/ -v
+
+  # ===========================================================================
+  # JOB 2 – BUILD & PUSH TO GHCR
+  # ===========================================================================
+  build-and-push:
+    name: "🐳 Build & Push Docker Image"
+    runs-on: ubuntu-latest
+    needs: test                    # Only runs AFTER tests pass
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    # This job needs extra permissions to push to GHCR
+    permissions:
+      contents: read
+      packages: write              # Required to push to GitHub Container Registry
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Log in to GitHub Container Registry using the built-in GITHUB_TOKEN
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Extract metadata (tags, labels) for the Docker image
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            # Tag with the full Git commit SHA (unique, traceable)
+            type=sha,format=long
+            # Tag as "latest" for the main branch
+            type=raw,value=latest
+
+      # Build and push the Docker image
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      # Print the published image tags for easy reference
+      - name: Print image tags
+        run: |
+          echo "✅ Image pushed to GHCR successfully!"
+          echo "Tags:"
+          echo "${{ steps.meta.outputs.tags }}"
+          echo ""
+          echo "Pull with:"
+          echo "  docker pull ghcr.io/${{ github.repository }}:latest"
+
+  # ===========================================================================
+  # JOB 3 – VULNERABILITY SCAN (informational)
+  # ===========================================================================
+  scan:
+    name: "🔍 Trivy Vulnerability Scan"
+    runs-on: ubuntu-latest
+    needs: build-and-push          # Only runs AFTER image is published
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    permissions:
+      contents: read
+      packages: read               # Required to pull the image from GHCR
+
+    steps:
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: "ghcr.io/${{ github.repository }}:latest"
+          format: "table"
+          exit-code: "0"           # 0 = don't fail the pipeline (informational)
+          severity: "CRITICAL,HIGH"
+          ignore-unfixed: true
+        env:
+          # Authenticate to pull the private GHCR image
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
