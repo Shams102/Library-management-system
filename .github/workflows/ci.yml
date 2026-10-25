@@ -20,6 +20,10 @@ on:
     branches:
       - main                       # Every PR targeting main
 
+# ── Image name (must be lowercase for OCI compliance) ────────────────────────
+env:
+  REGISTRY_IMAGE: ghcr.io/shams102/library-management-system
+
 # ── Default permissions (least privilege) ────────────────────────────────────
 permissions:
   contents: read                   # Read repo code (needed by checkout)
@@ -83,7 +87,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ${{ env.REGISTRY_IMAGE }}
           tags: |
             # Tag with the full Git commit SHA (unique, traceable)
             type=sha,format=long
@@ -107,7 +111,7 @@ jobs:
           echo "${{ steps.meta.outputs.tags }}"
           echo ""
           echo "Pull with:"
-          echo "  docker pull ghcr.io/${{ github.repository }}:latest"
+          echo "  docker pull ${{ env.REGISTRY_IMAGE }}:latest"
 
   # ===========================================================================
   # JOB 3 – VULNERABILITY SCAN (informational)
@@ -126,7 +130,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: "ghcr.io/${{ github.repository }}:latest"
+          image-ref: "${{ env.REGISTRY_IMAGE }}:latest"
           format: "table"
           exit-code: "0"           # 0 = don't fail the pipeline (informational)
           severity: "CRITICAL,HIGH"
