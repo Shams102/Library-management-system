@@ -1,0 +1,28 @@
+# ---------------------------------------------------------------------------
+# Docker Compose – Library Management System
+# ---------------------------------------------------------------------------
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: library-management:v1
+    container_name: library-app
+    ports:
+      - "5000:5000"
+    volumes:
+      - library-data:/data          # Persistent SQLite storage
+    environment:
+      - DATABASE_PATH=/data/library.db
+      - SECRET_KEY=production-secret-change-me
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  library-data:                     # Named volume – survives container removal

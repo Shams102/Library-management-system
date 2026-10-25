@@ -1,0 +1,17 @@
+# ---------------------------------------------------------------------------
+# .dockerignore – Exclude unnecessary files from the Docker build context
+# ---------------------------------------------------------------------------
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+tests/
+.git
+.gitignore
+.dockerignore
+*.md
+pipeline.ps1
+instance/
+*.db
+.venv
+venv

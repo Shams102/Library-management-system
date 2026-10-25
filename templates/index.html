@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Library Management System - Manage your book collection with ease">
+    <title>Library Management System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>📚 Library Management System</h1>
+            <p class="subtitle">Manage your book collection</p>
+        </header>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Add Book Form -->
+        <section class="card">
+            <h2>Add a New Book</h2>
+            <form method="POST" action="{{ url_for('add_book') }}" id="add-book-form">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="title">Title</label>
+                        <input type="text" id="title" name="title" placeholder="e.g. The Pragmatic Programmer" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="author">Author</label>
+                        <input type="text" id="author" name="author" placeholder="e.g. David Thomas" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="isbn">ISBN</label>
+                        <input type="text" id="isbn" name="isbn" placeholder="e.g. 978-0135957059" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" id="add-book-btn">Add Book</button>
+            </form>
+        </section>
+
+        <!-- Book List -->
+        <section class="card">
+            <h2>Book Collection <span class="badge">{{ books | length }}</span></h2>
+
+            {% if books %}
+                <div class="table-wrapper">
+                    <table id="books-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Title</th>
+                                <th>Author</th>
+                                <th>ISBN</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for book in books %}
+                            <tr>
+                                <td>{{ book['id'] }}</td>
+                                <td class="title-cell">{{ book['title'] }}</td>
+                                <td>{{ book['author'] }}</td>
+                                <td><code>{{ book['isbn'] }}</code></td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('delete_book', book_id=book['id']) }}"
+                                          onsubmit="return confirm('Remove \'{{ book['title'] }}\'?')">
+                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p class="empty-icon">📖</p>
+                    <p>The library is empty. Add your first book above!</p>
+                </div>
+            {% endif %}
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <p>Library Management System &mdash; DevOps CI/CD Demo Project</p>
+        </footer>
+    </div>
+</body>
+</html>
